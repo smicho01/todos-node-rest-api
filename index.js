@@ -14,6 +14,10 @@ app.use('/api/users', authRoute)
 const todoRoute = require('./routes/todoRoute')
 app.use('/api/todo', todoRoute)
 
+/* Route: Category */
+const categoryRoute = require('./routes/categoryRoute')
+app.use('/api/category', categoryRoute)
+
 MURL = process.env.MURL
 mongoose.connect(MURL, () => {
     console.log("Connection to MongoDB Atlas: ok")

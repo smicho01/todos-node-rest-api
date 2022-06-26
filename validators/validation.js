@@ -20,7 +20,8 @@ const loginValidation = (data) => {
 
 const todoValidation = (data) => {
     const todoValidation = joi.object({
-        title: joi.string().required().min(3).max(256)
+        title: joi.string().required().min(3).max(256),
+        category_id: joi.string().required().min(3).max(500),
     })
 
     return todoValidation.validate(data)

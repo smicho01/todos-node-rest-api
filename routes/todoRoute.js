@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 
 const ToDo = require('../models/ToDo');
+const CategoryModel = require('../models/Category');
 const {todoValidation} = require('../validators/validation');
 const { authUser, authRole, authOwner, getAuthUserId } = require('../verifyToken');
+
 
 /* Get All ToDos: for authentocated user only */
 router.get('/', authUser,   async (req, res) => {
@@ -18,9 +20,34 @@ router.get('/', authUser,   async (req, res) => {
     }
 })
 
-/* 
-*   GET One ToDo
-*/
+
+/* Gell all todos: by category. User must be todo and category owner */
+router.get('/category/:categoryId', authUser, async (req, res) => {
+    // Find categoy
+    try {
+        const category = await CategoryModel.findById(req.params.categoryId)
+
+        if(!authOwner(category.owner_id, req)) {
+            return res.status(403).send({message: "Unauthorized access"})
+        }
+        //return res.status(200).send(category)
+    } catch (err) {
+        return res.status(404).send({message: "Category not found"})
+    }
+
+    // Find todos in category
+    try {
+        const foundToDosList = await ToDo.find({
+            category_id: req.params.categoryId
+        })
+        return res.status(200).send(foundToDosList)
+    } catch (err) {
+        return res.status(404).send({message: "ToDos not found"})
+    }
+})
+
+
+/* GET One ToDo of the authenticated user */
 router.get('/:todoId', authUser, async (req, res) => {
     try {
         const foundToDo = await ToDo.findById(req.params.todoId)
@@ -36,17 +63,26 @@ router.get('/:todoId', authUser, async (req, res) => {
 })
 
 
-router.post('/', async(req, res) => {
-    const {error} = todoValidation(req.body);
+router.post('/', authUser, async(req, res) => {
+
+    const { error } = todoValidation(req.body);
+    const authenticatedUserId = getAuthUserId(req);
 
     if(error) {
         return res.status(500).send({message: error['details'][0]['message']})
     }
 
-    const newTodo = {
+    const newTodo = new ToDo ({
         title: req.body.title,
         category_id: req.body.category_id,
-        owner_id: req.body.owner_id,
+        owner_id: authenticatedUserId,
+    });
+
+    try {
+        const savedTodo = await newTodo.save();
+        res.status(201).send(savedTodo)
+    } catch (err) {
+        res.status(500).send({ message: err })
     }
 })
 
