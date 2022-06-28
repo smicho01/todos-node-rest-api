@@ -22,6 +22,8 @@ const todoValidation = (data) => {
     const todoValidation = joi.object({
         title: joi.string().required().min(3).max(256),
         category_id: joi.string().required().min(3).max(500),
+        description: joi.string().max(2000),
+        urgent: joi.boolean()
     })
 
     return todoValidation.validate(data)

@@ -21,9 +21,12 @@ const ToDoSchema = mongoose.Schema({
         type:Boolean,
         default: false
     },
+    urgent: {
+        type:Boolean,
+        default: false
+    },
     description: {
         type: String,
-        required: false,
         max: 3000
     },
     time_created: { 
@@ -33,10 +36,6 @@ const ToDoSchema = mongoose.Schema({
     time_completed: { 
         type: Date,
         default: null
-    },
-    sharedwith: {
-        type: Array,
-        default: []
     }
 })
 

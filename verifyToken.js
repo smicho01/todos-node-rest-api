@@ -12,7 +12,9 @@ const LOGGER = new Logger();
 
 function authUser (req, res, next) {
     const tokenString = req.header('Authorization');
+    const baseUrl = req.baseUrl
     if(!tokenString) {
+        LOGGER.log("Access denied on base URL : " + baseUrl  , req)
         return res.status(401).send({message: "Access denied"});
     }
 
@@ -23,17 +25,22 @@ function authUser (req, res, next) {
         req.user = verified
         next()
     } catch(err) {
+        LOGGER.log("Invalid token on base URL : " + baseUrl  , req)
         return res.status(401).send({message: "Invalid token"});
     }
 }
 
 function authRole(role) {
+
     return (req, res, next) => {
 
         const tokenDecoded = TokenDecoded(req);
         const userRoles = tokenDecoded.user_roles;
 
+        const baseUrl = req.baseUrl
+
         if(!userRoles.includes(role)) {
+            LOGGER.log("Invalid user role on base URL : " + baseUrl  , req)
             return res.status(401).send({message: "No permission to resource. Need role: " + role})
         }
         next()
@@ -45,11 +52,14 @@ function authOwner(entityOwnerId, req) {
         const tokenDecoded = TokenDecoded(req);
         const userRoles = tokenDecoded.user_roles;
 
+        const baseUrl = req.baseUrl
+
         LOGGER.log("Authorizing owner: (" + tokenDecoded.user_id + ") access for entity id: " + entityOwnerId , req)
 
         if(userRoles.includes("admin") || entityOwnerId === tokenDecoded.user_id) {
             return true
         }
+        LOGGER.log("Unauthorized resource owner on base URL : " + baseUrl  , req)
         return false
 }
 
