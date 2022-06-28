@@ -3,9 +3,11 @@
  *  Date: February 2022
  */
 const { array, number } = require('joi');
-const mongoose = require('mongoose');
+const mongoose = require('mongoose'); 
+const Category = require('./Category')
 
 const userSchema = mongoose.Schema({
+    _id: mongoose.Schema.Types.ObjectId,
     username: {
         type: String,
         required: true,
@@ -41,7 +43,11 @@ const userSchema = mongoose.Schema({
     penalties: {
         type: Number,
         default: 0
-    }
+    },
+    categories: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category'
+    }]
 });
-
-module.exports = mongoose.model('users', userSchema)
+const User = mongoose.model('User', userSchema)
+module.exports = User

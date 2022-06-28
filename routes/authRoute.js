@@ -3,6 +3,7 @@
  *  Date: February 2022
  */
 const express = require('express');
+const mongoose = require('mongoose')
 const bcryptjs = require('bcryptjs')
 const jsonwebtoken = require('jsonwebtoken')
 const dotenv = require('dotenv')
@@ -39,6 +40,7 @@ router.post('/register',  async (req, res) => {
 
         // Register User
         const user = new User({
+            _id: new mongoose.Types.ObjectId(),
             username: req.body.username,
             email: req.body.email,
             password: hashedPassword,
@@ -99,7 +101,7 @@ router.post('/login',  async (req, res) => {
     // Generate auth-token
     const token = jsonwebtoken.sign(
         {
-            user_id:userExists._id, 
+            user_id: userExists._id, 
             user_roles: userExists.roles,
             user_username: userExists.username
             
@@ -132,7 +134,10 @@ router.get('/', authUser, async (req, res) => {
 */
 router.get('/:userId', authUser, async (req, res) => {
     try {
-        const user = await User.findById(req.params.userId)
+        const user = await User.findOne({
+            _id: req.params.userId
+        }).populate('categories').exec();
+
         if (user.active == false)
             return res.status(409).send({message: "User inactive"})
         else

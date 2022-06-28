@@ -1,22 +1,23 @@
 const mongoose = require('mongoose');
+const User = require('./User')
 
 const CategorySchema = mongoose.Schema({
+    _id: mongoose.Schema.Types.ObjectId,
     name: {
         type: String,
         required: true,
         minlength: 3,
         max: 50
     },
-    owner_id: {
-        type: String,
-        required: true,
-        max:500
-    },
     color: {
         type: String,
         required: true,
         max: 30
+    },
+    user: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User' 
     }
 })
-
-module.exports = mongoose.model('category', CategorySchema);
+const Category = mongoose.model('Category', CategorySchema);
+module.exports = Category
