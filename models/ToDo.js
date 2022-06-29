@@ -7,15 +7,13 @@ const ToDoSchema = mongoose.Schema({
         minlength: 3,
         max: 256
     },
-    category_id: {
-        type: String,
-        required: true,
-        max:500
+    category: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category'
     },
-    owner_id: {
-        type: String,
-        required: true,
-        max:500
+    user: {
+       type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     },
     completed: {
         type:Boolean,
@@ -28,6 +26,10 @@ const ToDoSchema = mongoose.Schema({
     description: {
         type: String,
         max: 3000
+    },
+    todo_time: {
+        type: Date,
+        default: null
     },
     time_created: { 
         type: Date,
