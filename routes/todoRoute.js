@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose')
 
 const ToDo = require('../models/ToDo');
-const CategoryModel = require('../models/Category');
+const User = require('../models/User')
+const Category = require('../models/Category');
+
 const {todoValidation} = require('../validators/validation');
 const { authUser, authRole, authOwner, getAuthUserId } = require('../verifyToken');
 
@@ -16,7 +19,11 @@ router.get('/', authUser,   async (req, res) => {
     try {
         const todos = await ToDo.find({
             owner_id: authenticatedUserId
-        });
+        })
+        .populate('category', ['id', 'name', 'color'])
+        .populate('user', ['id','username'])
+        .exec()
+
         LOGGER.log("GET on all user todos" + authenticatedUserId , req)
         return res.status(200).send(todos)
     } catch (error) {
@@ -30,7 +37,7 @@ router.get('/', authUser,   async (req, res) => {
 router.get('/category/:categoryId', authUser, async (req, res) => {
     // Find categoy
     try {
-        const category = await CategoryModel.findById(req.params.categoryId)
+        const category = await Category.findById(req.params.categoryId)
 
         if(!authOwner(category.owner_id, req)) {
             return res.status(403).send({message: "Unauthorized access"})
@@ -45,6 +52,7 @@ router.get('/category/:categoryId', authUser, async (req, res) => {
         const foundToDosList = await ToDo.find({
             category_id: req.params.categoryId
         })
+
         return res.status(200).send(foundToDosList)
     } catch (err) {
         return res.status(404).send({message: "ToDos not found"})
@@ -56,8 +64,11 @@ router.get('/category/:categoryId', authUser, async (req, res) => {
 router.get('/:todoId', authUser, async (req, res) => {
     try {
         const foundToDo = await ToDo.findById(req.params.todoId)
+                                .populate('user')
+                                .populate('category')
+                                .exec()
 
-        if(!authOwner(foundToDo.owner_id, req)) {
+        if(!authOwner(foundToDo.user.id, req)) {
             return res.status(403).send({message: "Unauthorized access"})
         }
 
@@ -67,7 +78,15 @@ router.get('/:todoId', authUser, async (req, res) => {
     }
 })
 
-
+/* Add ToDo */
+/*
+{
+    "title": "Learn AWS EC2",
+    "category_id": "62b8cab668d2ab1c817f5d65",
+    "description" : "must do it by end of Sept 2022",
+    "urgent": true
+}
+*/
 router.post('/', authUser, async(req, res) => {
 
     const { error } = todoValidation(req.body);
@@ -77,21 +96,53 @@ router.post('/', authUser, async(req, res) => {
         return res.status(500).send({message: error['details'][0]['message']})
     }
 
-    const newTodo = new ToDo ({
-        title: req.body.title,
-        category_id: req.body.category_id,
-        owner_id: authenticatedUserId,
-        description: req.body.description ? req.body.description : '',
-        urgent: req.body.urgent ? req.body.urgent : false,
-    });
-
     try {
+        // Find user to assing a category to him.
+        const user = await User.findById(authenticatedUserId);
+      
+        const newTodo = new ToDo ({
+            _id: new mongoose.Types.ObjectId(),
+            title: req.body.title,
+            category: req.body.category_id,
+            user: user._id,
+            description: req.body.description ? req.body.description : '',
+            urgent: req.body.urgent ? req.body.urgent : false,
+        });
+
+        // Save ToDo
         const savedTodo = await newTodo.save();
-        res.status(201).send(savedTodo)
+
+        // Saving ToDo to the User to maintain relation.
+        user.todos.push(savedTodo);
+        user.save();
+
+        // Assign todo to the chosen category
+        const category = await Category.findById(savedTodo.category)
+        category.todos.push(savedTodo)
+        category.save()
+
+        return res.status(201).send(savedTodo)
     } catch (err) {
-        res.status(500).send({ message: err })
+        return res.status(500).send({ message: 'Error message' + err })
     }
 })
+
+router.patch("/:todoId", authUser, async (req, res) => {
+    const todoId = req.params.todoId;
+    try {
+        LOGGER.log("Attept to update ToDo id:" + todoId, req);
+        const todo = await ToDo.findById(todoId);
+        Object.assign(todo, req.body);
+        todo.save();
+        LOGGER.log("Todo Updated , id:" + todoId, req);
+        return res.status(200).send(todo)
+    } catch (error) {
+        LOGGER.log("Error updating todo , id:" + todoId + ' , message: ' + error, req);
+        return res.status(404).send({message: 'Error: ' + error})
+    }
+
+    res.send('ss')
+});
 
 router.delete("/:todoId", authUser, async (req, res) => {
     const todoId = req.params.todoId;
