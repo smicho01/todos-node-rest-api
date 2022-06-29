@@ -10,7 +10,7 @@ const dotenv = require('dotenv')
 const { restart } = require('nodemon');
 const { isError } = require('joi');
 const router = express.Router();
-const {authUser, authRole} = require('../verifyToken') // Verify JWT Tokens
+const {authUser, authRole, getAuthUserId} = require('../verifyToken') // Verify JWT Tokens
 
 const User = require('../models/User');
 const {registerValidation, loginValidation} = require('../validators/validation');
@@ -136,14 +136,22 @@ router.get('/:userId', authUser, async (req, res) => {
     try {
         const user = await User.findOne({
             _id: req.params.userId
-        }).populate('categories').exec();
+        })
+        .populate('categories')
+        .populate('todos')
+        .exec();
+
+        const authenticatedUserId = getAuthUserId(req);
+        if(authenticatedUserId != user.id) {
+            return res.status(409).send({message: "User can access only own data"})
+        }
 
         if (user.active == false)
             return res.status(409).send({message: "User inactive"})
         else
             return res.status(200).send(user)
     } catch (err) {
-        return res.status(409).send({message: "User not found"})
+        return res.status(409).send({message: 'Error message: ' + err})
     }
 })
 

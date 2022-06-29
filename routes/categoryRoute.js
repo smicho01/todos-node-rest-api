@@ -13,7 +13,7 @@ router.get('/', authUser,   async (req, res) => {
     const authenticatedUserId = getAuthUserId(req);
     try {
         const categories = await Category.find({
-            owner_id: authenticatedUserId
+            user: authenticatedUserId
         });
         return res.status(200).send(categories)
     } catch (error) {
@@ -26,7 +26,9 @@ router.get('/:categoryId', authUser,   async (req, res) => {
     try {
         const category = await Category.findOne({
             _id: req.params.categoryId
-        }).populate('user').exec();
+        })
+        .populate('user',['id','username'])
+        .exec();
 
         return res.status(200).send(category)
     } catch (error) {
@@ -61,6 +63,7 @@ router.post('/', authUser, async(req, res) => {
         return res.status(500).send({ message: error })
     }
 
+    // Find user to assing a category to him.
     const user = await User.findById(authenticatedUserId);
   
     const newCategory = new Category ({
