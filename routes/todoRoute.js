@@ -130,8 +130,18 @@ router.post('/', authUser, async(req, res) => {
 router.patch("/:todoId", authUser, async (req, res) => {
     const todoId = req.params.todoId;
     try {
+
         LOGGER.log("Attept to update ToDo id:" + todoId, req);
-        const todo = await ToDo.findById(todoId);
+        const todo = await ToDo.findById(todoId).populate('user').exec();
+
+        // Check if authenticated user owns ToDo
+        const authenticatedUserId = getAuthUserId(req);
+        const user = await User.findById(authenticatedUserId);
+        if(!authOwner(foundToDo.user.id, req)) {
+            return res.status(403).send({message: "Unauthorized access"})
+        }
+
+        
         Object.assign(todo, req.body);
         todo.save();
         LOGGER.log("Todo Updated , id:" + todoId, req);
@@ -150,8 +160,12 @@ router.delete("/:todoId", authUser, async (req, res) => {
     // check if authorized user is the owner of the todo
     try {
         const foundToDo = await ToDo.findById(todoId)
+                .populate('user')
+                .populate('category')
+                .exec();
+
         // check if the user owns the todo
-        if(!authOwner(foundToDo.owner_id, req)) {
+        if(!authOwner(foundToDo.user.id, req)) {
             return res.status(403).send({message: "Unauthorized access"})
         }
     } catch (err) {
