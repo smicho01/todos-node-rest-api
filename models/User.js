@@ -5,6 +5,7 @@
 const { array, number } = require('joi');
 const mongoose = require('mongoose'); 
 const Category = require('./Category')
+const ToDo = require('./ToDo')
 
 const userSchema = mongoose.Schema({
     _id: mongoose.Schema.Types.ObjectId,
@@ -47,6 +48,10 @@ const userSchema = mongoose.Schema({
     categories: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category'
+    }],
+    todos:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ToDo'
     }]
 });
 const User = mongoose.model('User', userSchema)

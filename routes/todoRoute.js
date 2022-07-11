@@ -137,7 +137,7 @@ router.patch("/:todoId", authUser, async (req, res) => {
         // Check if authenticated user owns ToDo
         const authenticatedUserId = getAuthUserId(req);
         const user = await User.findById(authenticatedUserId);
-        if(!authOwner(foundToDo.user.id, req)) {
+        if(!authOwner(todo.user.id, req)) {
             return res.status(403).send({message: "Unauthorized access"})
         }
 

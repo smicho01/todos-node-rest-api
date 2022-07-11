@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const User = require('./User')
 
 const ToDoSchema = mongoose.Schema({
     title: {
@@ -41,4 +42,4 @@ const ToDoSchema = mongoose.Schema({
     }
 })
 
-module.exports = mongoose.model('todos', ToDoSchema);
+module.exports = mongoose.model('ToDo', ToDoSchema);

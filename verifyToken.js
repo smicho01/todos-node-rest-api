@@ -51,7 +51,6 @@ function authOwner(entityOwnerId, req) {
         // Check if user is and admin
         const tokenDecoded = TokenDecoded(req);
         const userRoles = tokenDecoded.user_roles;
-
         const baseUrl = req.baseUrl
 
         LOGGER.log("Authorizing owner: (" + tokenDecoded.user_id + ") access for entity id: " + entityOwnerId , req)

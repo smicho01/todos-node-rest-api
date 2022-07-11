@@ -17,7 +17,11 @@ const CategorySchema = mongoose.Schema({
     user: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'User' 
-    }
+    },
+    todos:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ToDo'
+    }]
 })
 const Category = mongoose.model('Category', CategorySchema);
 module.exports = Category
